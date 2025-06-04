@@ -4,9 +4,25 @@ const startScrollerPosition = "93%";
 
 // Collection of different ScrollTrigger types
 const triggerTypes = {
-  // Default type: Resets when leaving viewport, plays when entering
-  // Good for repeatable animations that should reset when scrolling back up
+  // Default type: Plays only one time when entering viewport, then stops listening
+  // Perfect for animations that should only ever play once and never replay
   default: (triggerElement, timeline) => {
+    return [
+      ScrollTrigger.create({
+        trigger: triggerElement,
+        start: `top ${startScrollerPosition}`,
+        end: "bottom top",
+        markers: isMarkersOn,
+        once: true,
+        toggleActions: "play none none none",
+        onEnter: () => timeline.play(),
+      }),
+    ];
+  },
+
+  // ReplayAlways type: Resets when leaving viewport, plays when entering
+  // Good for repeatable animations that should reset when scrolling back up
+  replayAlways: (triggerElement, timeline) => {
     return [
       // First trigger: Resets the animation when element leaves viewport from top
       ScrollTrigger.create({
@@ -27,37 +43,6 @@ const triggerTypes = {
         markers: isMarkersOn,
         onEnter: () => timeline.play(),
         onEnterBack: () => timeline.restart(),
-      }),
-    ];
-  },
-
-  // ReplayOnEntry type: Plays each time element enters viewport
-  // Good for animations that should play fresh each time element enters viewport
-  replayOnEntry: (triggerElement, timeline) => {
-    return [
-      ScrollTrigger.create({
-        trigger: triggerElement,
-        start: `top ${startScrollerPosition}`,
-        end: "bottom top",
-        markers: isMarkersOn,
-        onEnter: () => timeline.play(),
-        onEnterBack: () => timeline.restart(),
-      }),
-    ];
-  },
-
-  // Fire-once type: Plays only one time when entering viewport, then stops listening
-  // Perfect for animations that should only ever play once and never replay
-  fireOnce: (triggerElement, timeline) => {
-    return [
-      ScrollTrigger.create({
-        trigger: triggerElement,
-        start: `top ${startScrollerPosition}`,
-        end: "bottom top",
-        markers: isMarkersOn,
-        once: true,
-        toggleActions: "play none none none",
-        onEnter: () => timeline.play(),
       }),
     ];
   },
@@ -111,12 +96,8 @@ export function createScrollTrigger(
 }
 
 // Helper functions for common trigger types
-export function createReplayOnEntryScrollTrigger(triggerElement, timeline) {
-  return createScrollTrigger(triggerElement, timeline, "replayOnEntry");
-}
-
-export function createFireOnceScrollTrigger(triggerElement, timeline) {
-  return createScrollTrigger(triggerElement, timeline, "fireOnce");
+export function createReplayAlwaysScrollTrigger(triggerElement, timeline) {
+  return createScrollTrigger(triggerElement, timeline, "replayAlways");
 }
 
 export function createScrubScrollTrigger(triggerElement, timeline) {
@@ -128,18 +109,13 @@ export function createPinnedScrollTrigger(triggerElement, timeline) {
 }
 
 /* Usage examples:
-// Default behavior (resets on scroll up)
+// Default behavior (plays once and never again)
 createScrollTrigger(element, timeline);
 
-// ReplayOnEntry trigger (plays fresh each time element enters)
-createScrollTrigger(element, timeline, 'replayOnEntry');
+// ReplayAlways trigger (resets on scroll up)
+createScrollTrigger(element, timeline, 'replayAlways');
 // or
-createReplayOnEntryScrollTrigger(element, timeline);
-
-// Fire-once trigger (plays once and never again)
-createScrollTrigger(element, timeline, 'fireOnce');
-// or
-createFireOnceScrollTrigger(element, timeline);
+createReplayAlwaysScrollTrigger(element, timeline);
 
 // Scrubbing animation (follows scroll)
 createScrollTrigger(element, timeline, 'scrub');
