@@ -1,4 +1,4 @@
-// text-animations.js - Core text animation system
+// Core text animation system
 import { createScrollTrigger } from "../utils/scrollTriggers.js";
 import { splitTextForAnimation, SPLIT_TYPES } from "../utils/textSplitter.js";
 
