@@ -1,10 +1,10 @@
 // text-animations.js - Minimalist starter file for text animations
-import { createFireOnceScrollTrigger } from "../utils/scrollTriggers.js";
+import { createScrollTrigger } from "../utils/scrollTriggers.js";
 import { splitTextForAnimation, SPLIT_TYPES } from "../utils/textSplitter.js";
 
 // Animation selectors
-const animationAttributeName = "data-ani";
-const delayAttributeName = "data-ani-delay";
+const animationAttributeName = "data-text-ani";
+const delayAttributeName = "data-text-ani-delay";
 
 // Check if GSAP is available
 function isGSAPAvailable() {
@@ -206,7 +206,7 @@ function createBaseAnimation(element, animationCallback) {
   of the site that sets the opacity to 0, preventing FOUC */
   const target = element;
   const tl = gsap.timeline({ paused: true });
-  createFireOnceScrollTrigger(target, tl);
+  createScrollTrigger(target, tl);
   animationCallback(target, tl);
 }
 
