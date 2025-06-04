@@ -6,6 +6,33 @@ import { splitTextForAnimation, SPLIT_TYPES } from "../utils/textSplitter.js";
 const animationAttributeName = "data-ani";
 const delayAttributeName = "data-ani-delay";
 
+// Check if GSAP is available
+function isGSAPAvailable() {
+  return typeof gsap !== "undefined" && typeof SplitText !== "undefined";
+}
+
+// Check for reduced motion preference
+function hasReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+// Handle GSAP loading and error cases
+function handleGSAPLoading() {
+  // If GSAP is not available, show all elements immediately
+  if (!isGSAPAvailable()) {
+    document
+      .querySelectorAll(`[${animationAttributeName}]`)
+      .forEach((element) => {
+        element.style.opacity = "1";
+      });
+    console.warn(
+      "GSAP or SplitText plugin not loaded. Text animations disabled."
+    );
+    return false;
+  }
+  return true;
+}
+
 /**
  * Define all animations with their selectors and animation functions
  * This is the SINGLE source of truth for animations
@@ -175,6 +202,8 @@ function getDelay(element) {
  */
 function createBaseAnimation(element, animationCallback) {
   gsap.set(element, { opacity: 1 });
+  /* This line above is needed if there's CSS in the <head>
+  of the site that sets the opacity to 0, preventing FOUC */
   const target = element;
   const tl = gsap.timeline({ paused: true });
   createFireOnceScrollTrigger(target, tl);
@@ -186,6 +215,11 @@ function createBaseAnimation(element, animationCallback) {
  * Includes error handling for missing selectors
  */
 export function runTextAnimations() {
+  // Skip animations if reduced motion is preferred
+  if (hasReducedMotion()) {
+    return;
+  }
+
   try {
     // Loop through each animation type in our animations object
     Object.entries(animations).forEach(([name, animationType]) => {
@@ -195,7 +229,6 @@ export function runTextAnimations() {
 
         // Skip if no elements found
         if (elements.length === 0) {
-          // console.info(`No elements found for "${name}" animation`);
           return; // Skip this animation type and continue with others
         }
 
@@ -224,8 +257,24 @@ export function runTextAnimations() {
  * Initialize all text animations
  * Call this function from your main JS file
  */
-// in text.js
 export function initializeTextAnimations() {
+  // Check for reduced motion preference first
+  if (hasReducedMotion()) {
+    // Show all elements immediately if reduced motion is preferred
+    document
+      .querySelectorAll(`[${animationAttributeName}]`)
+      .forEach((element) => {
+        element.style.opacity = "1";
+      });
+    return; // Don't initialize animations
+  }
+
+  // Check if GSAP is available
+  if (!handleGSAPLoading()) {
+    return; // Exit if GSAP is not available
+  }
+
+  // Proceed with animations
   document.addEventListener("DOMContentLoaded", () => {
     document.fonts.ready.then(() => {
       runTextAnimations();
