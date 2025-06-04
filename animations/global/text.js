@@ -1,4 +1,4 @@
-// text-animations.js - Minimalist starter file for text animations
+// text-animations.js - Core text animation system
 import { createScrollTrigger } from "../utils/scrollTriggers.js";
 import { splitTextForAnimation, SPLIT_TYPES } from "../utils/textSplitter.js";
 
@@ -34,8 +34,8 @@ function handleGSAPLoading() {
 }
 
 /**
- * Define all animations with their selectors and animation functions
- * This is the SINGLE source of truth for animations
+ * Animation definitions with selectors and animation functions
+ * Single source of truth for all text animations
  */
 export const animations = {
   // Title animations
@@ -52,18 +52,17 @@ export const animations = {
           scale: 1.3,
           opacity: 0,
           filter: "blur(6px)",
-          // textShadow: "0 0 20px rgba(245, 110, 0, 0.7)",
           duration: 1.25,
           delay,
           stagger: { each: 0.04, from: "center" },
           ease: "power1.out",
-          onComplete: () => split.revert(), // <-- restores original innerHTML
+          onComplete: () => split.revert(), // Restores original innerHTML
         });
       });
     },
   },
 
-  // Heading cinematic - dramatic zoom with depth and blur like a movie title
+  // Heading cinematic - dramatic zoom with depth and blur
   heading: {
     selector: `[${animationAttributeName}="heading"]`,
     animate: (element, delay = 0) => {
@@ -77,12 +76,11 @@ export const animations = {
           scale: 1.2,
           opacity: 0,
           filter: "blur(3px)",
-          // textShadow: "0 0 20px rgba(186, 153, 45, 0.7)",
           duration: 1.2,
           delay,
           stagger: { each: 0.03, from: "left" },
           ease: "power2.out",
-          onComplete: () => split.revert(), // <-- restores original innerHTML
+          onComplete: () => split.revert(), // Restores original innerHTML
         });
       });
     },
@@ -109,34 +107,7 @@ export const animations = {
           stagger: 0.1,
           delay: 0.5,
           ease: "power1.out",
-          onComplete: () => split.revert(), // <-- restores original innerHTML
-        });
-      });
-    },
-  },
-
-  // Handwriting smear - letters appearing with a horizontal blur like wet ink
-  handwriting: {
-    selector: `[${animationAttributeName}="handwriting"]`,
-    animate: (element, delay = 0) => {
-      const split = splitTextForAnimation(element, [
-        SPLIT_TYPES.CHARS,
-        SPLIT_TYPES.WORDS,
-      ]);
-
-      createBaseAnimation(element, (target, tl) => {
-        tl.from(split.chars, {
-          opacity: 0,
-          x: "random(-5, 5)",
-          y: "random(-3, 3)",
-          // rotation: "random(-3, 3)",
-          filter: "blur(2px)",
-          duration: 0.7,
-          delay,
-          stagger: { each: 0.01 },
-          ease: "power1.out",
-          // Sometimes causes issues for handwriting font, don't revert for now ->
-          // onComplete: () => split.revert(), // <-- restores original innerHTML
+          onComplete: () => split.revert(), // Restores original innerHTML
         });
       });
     },
@@ -157,7 +128,7 @@ export const animations = {
           duration: 0.3,
           delay: 0.25,
           ease: "power1.out",
-          onComplete: () => split.revert(), // <-- restores original innerHTML
+          onComplete: () => split.revert(), // Restores original innerHTML
         });
       });
     },
@@ -181,8 +152,8 @@ export const animations = {
 };
 
 /**
- * Get animation delay from element's data-ani-delay attribute
- * @param {HTMLElement} element - The element to check for delay
+ * Get animation delay from element's data-text-ani-delay attribute
+ * @param {HTMLElement} element - Target element
  * @returns {number} Delay in seconds (0 if no delay set)
  */
 function getDelay(element) {
@@ -198,12 +169,11 @@ function getDelay(element) {
 /**
  * Base animation function that sets up common properties
  * @param {HTMLElement} element - Target element
- * @param {function} animationCallback - Function to create the timeline
+ * @param {function} animationCallback - Timeline creation function
  */
 function createBaseAnimation(element, animationCallback) {
   gsap.set(element, { opacity: 1 });
-  /* This line above is needed if there's CSS in the <head>
-  of the site that sets the opacity to 0, preventing FOUC */
+  /* Required if CSS sets opacity to 0 to prevent FOUC */
   const target = element;
   const tl = gsap.timeline({ paused: true });
   createScrollTrigger(target, tl);
@@ -211,7 +181,7 @@ function createBaseAnimation(element, animationCallback) {
 }
 
 /**
- * Run all text animations by looping through the animations object
+ * Run all text animations
  * Includes error handling for missing selectors
  */
 export function runTextAnimations() {
@@ -221,151 +191,53 @@ export function runTextAnimations() {
   }
 
   try {
-    // Loop through each animation type in our animations object
+    // Loop through each animation type
     Object.entries(animations).forEach(([name, animationType]) => {
       try {
-        // Get all elements matching this animation's selector
         const elements = document.querySelectorAll(animationType.selector);
 
-        // Skip if no elements found
         if (elements.length === 0) {
-          return; // Skip this animation type and continue with others
+          return;
         }
 
-        // Apply the animation to each element
         elements.forEach((element) => {
           try {
             const delay = getDelay(element);
             animationType.animate(element, delay);
           } catch (elementError) {
-            // Log error but continue with other elements
             console.warn(`Error animating ${name} element:`, elementError);
           }
         });
       } catch (typeError) {
-        // Log error but continue with other animation types
         console.warn(`Error processing animation type "${name}":`, typeError);
       }
     });
   } catch (globalError) {
-    // Log any overall errors
     console.error("Error in runTextAnimations:", globalError);
   }
 }
 
 /**
- * Initialize all text animations
- * Call this function from your main JS file
+ * Initialize text animations
+ * Call this function from the main JS file
  */
 export function initializeTextAnimations() {
-  // Check for reduced motion preference first
   if (hasReducedMotion()) {
-    // Show all elements immediately if reduced motion is preferred
     document
       .querySelectorAll(`[${animationAttributeName}]`)
       .forEach((element) => {
         element.style.opacity = "1";
       });
-    return; // Don't initialize animations
+    return;
   }
 
-  // Check if GSAP is available
   if (!handleGSAPLoading()) {
-    return; // Exit if GSAP is not available
+    return;
   }
 
-  // Proceed with animations
   document.addEventListener("DOMContentLoaded", () => {
     document.fonts.ready.then(() => {
       runTextAnimations();
     });
   });
 }
-
-/* Usage Examples:
-
-  1. Using an existing animation on a custom element:
-  
-     ```js
-     import { animations } from './utils/text.js';
-     
-     // Get an element that doesn't have the data-ani attribute
-     const customElement = document.querySelector('.my-special-heading');
-     
-     // Animate it with the heading animation
-     animations.heading.animate(customElement);
-     
-     // Or with the title animation and a 0.3 second delay
-     animations.title.animate(customElement, 0.3);
-     ```
-
-  2. Adding a new animation type to the animations object:
-  
-     ```js
-     import { splitTextForAnimation, SPLIT_TYPES } from './utils/textSplitter.js';
-     
-     // Add a new animation to the animations object
-     animations.highlight = {
-       selector: '[data-ani="highlight"]',
-       animate: (element, delay = 0) => {
-         // Split the text into chars
-         const split = splitTextForAnimation(element, [SPLIT_TYPES.CHARS]);
-         
-         createBaseAnimation(element, (target, tl) => {
-           // Create a staggered highlight effect
-           tl.from(split.chars, {
-             opacity: 0,
-             duration: 0.05,
-             stagger: 0.03,
-             delay,
-             ease: "none"
-           });
-         });
-       }
-     };
-     ```
-
-  3. Using autoSplit for responsive text:
-  
-     ```js
-     // For headlines that need to maintain proper line breaks when resized
-     const split = splitTextForAnimation('.responsive-headline', [SPLIT_TYPES.LINES], {
-       autoSplit: true,  // Will automatically re-split when container width changes
-     });
-     
-     // Animation will be cleaned up and reapplied correctly when text re-splits
-     gsap.from(split.lines, {
-       opacity: 0,
-       y: 20,
-       stagger: 0.1
-     });
-     ```
-
-  4. Using other GSAP SplitText options:
-  
-     ```js
-     // Using mask for reveal effects
-     const split = splitTextForAnimation('.mask-reveal', [SPLIT_TYPES.LINES], {
-       mask: true  // Creates a wrapper with overflow: hidden for clean reveals
-     });
-     
-     gsap.from(split.lines, {
-       yPercent: 100,  // Slides up from below
-       duration: 1,
-       stagger: 0.1
-     });
-     
-     // Using absolute positioning (better for certain animations)
-     const split = splitTextForAnimation('.fancy-effect', [SPLIT_TYPES.CHARS], {
-       absolute: true  // Sets chars to absolute position for more complex animations
-     });
-     
-     gsap.from(split.chars, {
-       x: "random(-100, 100)",
-       y: "random(-50, 50)",
-       rotation: "random(-180, 180)",
-       scale: 0,
-       stagger: 0.02
-     });
-     ```
-*/
